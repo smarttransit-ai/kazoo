@@ -77,7 +77,8 @@ class Lock(object):
     # sequence number. Involved in read/write locks.
     _EXCLUDE_NAMES = ["__lock__"]
 
-    def __init__(self, client, path, identifier=None, extra_lock_patterns=()):
+    def __init__(self, client, path, identifier=None,
+                 timeout=None, extra_lock_patterns=()):
         """Create a Kazoo lock.
 
         :param client: A :class:`~kazoo.client.KazooClient` instance.
@@ -97,6 +98,7 @@ class Lock(object):
         """
         self.client = client
         self.path = path
+        self.timeout = timeout
         self._exclude_names = set(
             self._EXCLUDE_NAMES + list(extra_lock_patterns)
         )
@@ -167,6 +169,7 @@ class Lock(object):
             The ephemeral option.
         """
 
+        timeout = timeout if timeout is not None else self.timeout
         retry = self._retry.copy()
         retry.deadline = timeout
 
