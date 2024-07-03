@@ -30,15 +30,25 @@ if [ "$SSL" = true ]; then
     fi
 fi
 
+#==================================================================================================
+# PRE-REQUISITES & WARNINGS
+
+# Check if Java is installed
 java --version || { echo "Java is not installed. https://www.oracle.com/java/technologies/downloads/ "; exit 1; }
+
+if [ -d ${zoopath} ]; then
+    echo "Zookeeper is already installed. Press any key to overwrite or CTRL+C to exit."
+    read -n 1 -s
+fi
 
 #==================================================================================================
 # DOWNLOAD AND INSTALL ZOOKEEPER
 
 sudo wget https://downloads.apache.org/zookeeper/zookeeper-${zooversion}/apache-zookeeper-${zooversion}-bin.tar.gz
-sudo tar -xvf apache-zookeeper-${zooversion}-bin.tar.gz
+#quietly extract the tar file
+sudo tar -xf apache-zookeeper-${zooversion}-bin.tar.gz 
 sudo rm apache-zookeeper-${zooversion}-bin.tar.gz
-sudo mv /opt/apache-zookeeper-${zooversion}-bin ${zoopath}
+sudo mv apache-zookeeper-${zooversion}-bin ${zoopath}
 sudo mkdir -p ${zoodata}
 
 #==================================================================================================
@@ -82,9 +92,8 @@ EOF
 
 #==================================================================================================
 # SET ZOOKEEPER SASL AUTHENTICATION
-#check if zookeeper jaas file exists
 
-if [ "$SASL" = true ] && [ ! -f ${zoojaas} ]; then
+if [ "$SASL" = true ]; then
 sudo tee ${zoojaas} > /dev/null << EOF
 Server {
     org.apache.zookeeper.server.auth.DigestLoginModule required
