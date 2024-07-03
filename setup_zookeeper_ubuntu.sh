@@ -9,7 +9,7 @@
 # Set to true/false if you want to enable/disable SSL/SASL
 SSL=true
 SASL=true
-
+zooport=2189
 zooversion='3.9.2'
 
 zoodata="/var/lib/zookeeper"
@@ -47,8 +47,8 @@ fi
 sudo wget https://downloads.apache.org/zookeeper/zookeeper-${zooversion}/apache-zookeeper-${zooversion}-bin.tar.gz
 #quietly extract the tar file
 sudo tar -xf apache-zookeeper-${zooversion}-bin.tar.gz 
-sudo rm apache-zookeeper-${zooversion}-bin.tar.gz
-sudo mv apache-zookeeper-${zooversion}-bin ${zoopath}
+sudo rsync -a --delete apache-zookeeper-${zooversion}-bin ${zoopath}
+sudo rm -r apache-zookeeper-${zooversion}-bin.tar.gz apache-zookeeper-${zooversion}-bin
 sudo mkdir -p ${zoodata}
 
 #==================================================================================================
@@ -58,7 +58,7 @@ sudo tee ${zoocfg} > /dev/null << EOF
 tickTime=2000
 dataDir=${zoodata}
 admin.enableServer=false
-$(if [ "$SSL" != true ]; then printf "clientPort=2189"; fi)
+$(if [ "$SSL" != true ]; then printf "clientPort=${zooport}"; fi)
 initLimit=5
 syncLimit=2
 maxClientCnxns=10
@@ -66,7 +66,7 @@ maxClientCnxns=10
 $(
 if [ "$SSL" = true ]; then
 printf "#TLS
-secureClientPort=2189
+secureClientPort=${zooport}
 serverCnxnFactory=org.apache.zookeeper.server.NettyServerCnxnFactory
 ssl.clientAuth=none
 ssl.keyStore.location=${zookeystore}
@@ -149,6 +149,7 @@ EOF
 
 # Start and enable the Zookeeper service
 sudo systemctl daemon-reload
+sudo fuser -k ${zooport}/tcp || true
 sudo systemctl start zookeeper
 sudo systemctl enable zookeeper
 sudo journalctl -u zookeeper -f
